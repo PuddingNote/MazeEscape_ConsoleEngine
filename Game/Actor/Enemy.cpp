@@ -14,14 +14,9 @@
 #include <algorithm>
 #include <iostream>
 
-Enemy::Enemy(const Vector2& position) : Actor('E', Color::Blue, position)
+Enemy::Enemy(const Vector2& position) : Actor('E', Color::SkyBlue, position)
 {
     SetSortingOrder(2);
-}
-
-Enemy::~Enemy()
-{
-
 }
 
 void Enemy::BeginPlay()
@@ -61,7 +56,7 @@ void Enemy::Tick(float deltaTime)
     // 이동 타이머 업데이트
     moveTimer += deltaTime;
 
-    if (moveTimer >= 0.8f - moveSpeed)
+    if (moveTimer >= 1.0f - moveSpeed)
     {
         moveTimer = 0.0f;
 
@@ -75,7 +70,14 @@ void Enemy::Tick(float deltaTime)
     }
 }
 
-// A* 알고리즘으로 최단 경로 탐색
+// 미로 사이즈 가져와서 설정하는 함수
+void Enemy::SetMazeSize(int width, int height)
+{
+    mazeWidth = width;
+    mazeHeight = height;
+}
+
+// 최단 경로 탐색 함수 (A* 알고리즘)
 void Enemy::FindPathToTarget(const Vector2& targetPosition)
 {
     std::priority_queue<Node, std::vector<Node>, std::greater<Node>> openSet;
@@ -179,8 +181,8 @@ bool Enemy::CanMoveTo(const Vector2& position)
         return false;
     }
 
-    // Todo: 범위 체크인데 임시방편으로 수치를 넣음
-    if (position.x < 0 || position.x >= 60 || position.y < 0 || position.y >= 40)
+    // 미로의 범위 체크
+    if (position.x < 0 || position.x >= mazeWidth || position.y < 0 || position.y >= mazeHeight)
     {
         return false;
     }
@@ -214,6 +216,7 @@ void Enemy::SetPath(const std::vector<Vector2>& path)
     hasPath = true;
 }
 
+// Path 액터 생성 함수
 void Enemy::CreatePathActors()
 {
     // 기존 Path 액터들 제거
@@ -233,6 +236,7 @@ void Enemy::CreatePathActors()
     }
 }
 
+// Path 액터 제거 함수
 void Enemy::ClearPathActors()
 {
     // Path 액터들 제거
@@ -262,7 +266,7 @@ bool Enemy::RemoveNextPath()
         Utils::SetConsolePosition({ (short)pos.x, (short)pos.y });
         std::cout << ' ';
 
-        // Level에서 해당 Actor 제거 (SafeDelete는 Level의 RemoveActor에서 처리)
+        // Level에서 해당 Actor 제거
         GetOwner()->RemoveActor(pathActor);
     }
 
@@ -273,11 +277,13 @@ bool Enemy::RemoveNextPath()
     return !pathActors.empty();
 }
 
+// Enemy 움직임 중지 함수
 void Enemy::StopMovement()
 {
     isMovementStopped = true;
 }
 
+// Enemy 이동속도 설정 함수
 void Enemy::SetMoveSpeed(float speed)
 {
     moveSpeed = speed;

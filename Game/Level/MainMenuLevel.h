@@ -5,18 +5,18 @@
 
 #include <vector>
 
-struct MenuItem
+struct MainMenuItem
 {
 	// 함수 포인터 선언
 	typedef void (*OnSelected)();
 
-	MenuItem(const char* text, OnSelected onSelected) : onSelected(onSelected)
+	MainMenuItem(const char* text, OnSelected onSelected) : onSelected(onSelected)
 	{
 		size_t length = strlen(text) + 1;
 		menuText = new char[length];
 		strcpy_s(menuText, length, text);
 	}
-	~MenuItem()
+	~MainMenuItem()
 	{
 		SafeDeleteArray(menuText);
 	}
@@ -28,21 +28,21 @@ struct MenuItem
 	OnSelected onSelected = nullptr;
 };
 
-class MenuLevel : public Level
+class MainMenuLevel : public Level
 {
-	RTTI_DECLARATIONS(MenuLevel, Level)
+	RTTI_DECLARATIONS(MainMenuLevel, Level)
 
 public:
-	MenuLevel();
-	~MenuLevel();
+	MainMenuLevel();
+	~MainMenuLevel();
 
 	virtual void Tick(float deltaTime) override;
 	virtual void Render() override;
 
 private:
-	int currentIndex = 0;			// 현재 선택된 아이템의 인덱스
-	std::vector<MenuItem*> items;	// 아이템 배열
-	int length = 0;					// 메뉴 아이템 수
+	int currentIndex = 0;				// 현재 선택된 아이템의 인덱스
+	std::vector<MainMenuItem*> items;	// 아이템 배열
+	int length = 0;						// 메뉴 아이템 수
 
 	Color selectedColor = Color::Green;		// 아이템 선택O 색상
 	Color unselectedColor = Color::White;	// 아이템 선택X 색상

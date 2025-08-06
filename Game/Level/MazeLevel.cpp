@@ -3,6 +3,7 @@
 #include "Utils/Utils.h"
 #include "Engine.h"
 
+#include "Game/Game.h"
 #include "Actor/Actor.h"
 #include "Actor/Wall.h"
 #include "Actor/Ground.h"
@@ -15,9 +16,33 @@
 #include <random>
 #include <ctime>
 
-MazeLevel::MazeLevel()
+MazeLevel::MazeLevel(int width, int height) : MAZE_WIDTH(width), MAZE_HEIGHT(height)
 {
+	// EXIT 위치 계산
+	EXIT_X = MAZE_WIDTH - 2;
+	EXIT_Y = MAZE_HEIGHT / 2;
+
+	// 동적 배열 할당
+	mazeData = new MazeCellType * [MAZE_HEIGHT];
+	for (int i = 0; i < MAZE_HEIGHT; ++i)
+	{
+		mazeData[i] = new MazeCellType[MAZE_WIDTH];
+	}
+
+	// MainLevel에서 온 경우 재렌더링 필요
+	needsStaticRerender = true;
+
 	GenerateMaze();
+}
+
+MazeLevel::~MazeLevel()
+{
+	for (int i = 0; i < MAZE_HEIGHT; ++i)
+	{
+		SafeDeleteArray(mazeData[i]);
+	}
+
+	SafeDeleteArray(mazeData);
 }
 
 // 미로 생성 관련 모음 함수
@@ -41,7 +66,7 @@ void MazeLevel::GenerateMaze()
 	// 최소 2갈래 이상 경로 보장 (상, 하)
 	EnsureUpDownPaths();
 
-	// Actor 생성 (길, 벽)
+	// Actor 생성 (벽, 길)
 	for (int y = 0; y < MAZE_HEIGHT; ++y)
 	{
 		for (int x = 0; x < MAZE_WIDTH; ++x)
@@ -57,7 +82,7 @@ void MazeLevel::GenerateMaze()
 		}
 	}
 
-	// Actor 생성 (적, 플레이어)
+	// Actor 생성 (출구, 적, 플레이어)
 	InitializeActors();
 
 	// 초기 렌더링 (벽, 길, 출구)
@@ -115,7 +140,8 @@ void MazeLevel::InitializeActors()
 
 	// 적 생성 (현재: 좌측 하단 / 나중에: 출구에서 일정거리 이상의 랜덤으로 설정 할 예정)
 	Enemy* enemy = new Enemy(Vector2(1, MAZE_HEIGHT - 2));
-	float enemySpeed = (stageLevel - 1) * ENEMY_SPEED_INCREMENT;
+	enemy->SetMazeSize(MAZE_WIDTH, MAZE_HEIGHT);
+	float enemySpeed = stageLevel * ENEMY_SPEED_INCREMENT;
 	enemy->SetMoveSpeed(enemySpeed);
 
 	AddActor(enemy);
@@ -222,30 +248,45 @@ void MazeLevel::InitialRender()
 
 void MazeLevel::Render()
 {
-	// 메뉴에서 돌아온 경우 (벽, 길, 출구) 재렌더링
+	// 메뉴에서 온 경우 (벽, 길, 출구) 재렌더링
 	if (needsStaticRerender)
 	{
 		InitialRender();
 		needsStaticRerender = false;
 	}
 
+	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 1 });
+	Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
+	std::cout << "  Stage: " << stageLevel + 1 << '\n';
+
 	if (isStageClear)
 	{
-		Utils::SetConsolePosition({ MAZE_WIDTH + 10, MAZE_HEIGHT / 2});
-		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Green));
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 3 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
 		std::cout << "  Stage Clear!!!  \n";
 
 		Sleep(1000);
 		system("cls");
 
 		stageLevel++;
-		if (stageLevel >= 6)
+		if (stageLevel >= MAX_STAGE)
 		{
-			// Todo: 게임 종료가 아닌 메인 메뉴로 가기 추가 예정
-			Engine::Get().Quit();
-		}
+			Utils::SetConsolePosition({ 5, 3 });
+			Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
+			std::cout << "*** ALL STAGES COMPLETED! ***\n";
 
-		RegenerateMaze();
+			Utils::SetConsolePosition({ 7, 4 });
+			std::cout << "Returning to Main Menu...\n";
+
+			Sleep(2000);
+			system("cls");
+
+			Game::Get().GoMainMenuLevel();
+		}
+		else
+		{
+			RegenerateMaze();
+		}
 	}
 	else
 	{
@@ -296,15 +337,23 @@ void MazeLevel::CheckStageClear()
 	// Enemy가 Target에 도달했다면
 	else if (enemy && target && enemy->Position() == target->Position())
 	{
-		Utils::SetConsolePosition({ MAZE_WIDTH + 10, MAZE_HEIGHT / 2 });
-		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Red));
-		std::cout << "  Game Over!!!  \n";;
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 3 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Purple));
+		std::cout << "  Game Over!!!  \n";
 
 		Sleep(1000);
 		system("cls");
+		
+		Utils::SetConsolePosition({ 10, 3 });
+		std::cout << "*** GAME OVER! ***\n";;
 
-		// Todo: 게임 종료가 아닌 메인 메뉴로 가기 추가 예정
-		Engine::Get().Quit();
+		Utils::SetConsolePosition({ 7, 4 });
+		std::cout << "Returning to Main Menu...\n";
+
+		Sleep(2000);
+		system("cls");
+
+		Game::Get().GoMainMenuLevel();
 	}
 }
 

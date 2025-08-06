@@ -1,31 +1,44 @@
-#include "MenuLevel.h"
+#include "MainMenuLevel.h"
 #include "../Game//Game.h"
 #include "Utils/Utils.h"
 #include "Input.h"
 
 #include <iostream>
 
-MenuLevel::MenuLevel()
+MainMenuLevel::MainMenuLevel()
 {
 	// 메뉴 아이템 추가
-	items.emplace_back(new MenuItem("Resume Game", []()
+	items.emplace_back(new MainMenuItem("Easy Mode", []()
 		{
-			Game::Get().ToggleMenu();
+			Game::Get().StartGame(21, 11);
 		}
 	));
 
-	items.emplace_back(new MenuItem("Go Main Title", []()
+	items.emplace_back(new MainMenuItem("Normal Mode", []()
 		{
-			Game::Get().GoMainMenuLevel();
+			Game::Get().StartGame(33, 15);
 		}
 	));
 
-	length = static_cast<int>(items.size());	// 아이템 수 미리 저장
+	items.emplace_back(new MainMenuItem("Hard Mode", []()
+		{
+			Game::Get().StartGame(51, 19);
+		}
+	));
+
+	items.emplace_back(new MainMenuItem("Quit Game", []()
+		{
+			Game::Get().Quit();
+		}
+	));
+
+	// 아이템 수 미리 저장
+	length = static_cast<int>(items.size());
 }
 
-MenuLevel::~MenuLevel()
+MainMenuLevel::~MainMenuLevel()
 {
-	for (MenuItem* item : items)
+	for (MainMenuItem* item : items)
 	{
 		SafeDelete(item);
 	}
@@ -33,7 +46,7 @@ MenuLevel::~MenuLevel()
 	items.clear();
 }
 
-void MenuLevel::Tick(float deltaTime)
+void MainMenuLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
@@ -64,14 +77,14 @@ void MenuLevel::Tick(float deltaTime)
 	}
 }
 
-void MenuLevel::Render()
+void MainMenuLevel::Render()
 {
 	super::Render();
 
 	// 색상 & 좌표 정리
 	Utils::SetConsolePosition({ 0, 0 });
 	Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
-	std::cout << "Game Paused\n\n\n";
+	std::cout << "Maze Escape Game\n\n\n";
 
 	Utils::SetConsoleTextColor(static_cast<WORD>(unselectedColor));
 	// 메뉴 아이템 렌더링

@@ -26,10 +26,11 @@ class Enemy : public Actor
 
 public:
     Enemy(const Vector2& position);
-    virtual ~Enemy();
 
     virtual void BeginPlay() override;
     virtual void Tick(float deltaTime) override;
+
+    void SetMazeSize(int width, int height);    // 미로 범위 체크를 위한 미로 사이즈 설정 함수
 
     void FindPathToTarget(const Vector2& targetPosition);	// 경로 탐색
     bool CanMoveTo(const Vector2& position);				// 이동 가능 확인
@@ -48,6 +49,9 @@ private:
     int Heuristic(const Vector2& from, const Vector2& to) const;  // 휴리스틱 함수 (맨해튼 거리)
 
 private:
+    int mazeWidth = 25;
+    int mazeHeight = 15;
+
     // 게임 시작시 경로 관련
     std::vector<Vector2> pathToTarget;	// 타겟까지의 경로
     int currentPathIndex = 0;			// 현재 경로 인덱스
