@@ -32,7 +32,7 @@ MazeLevel::MazeLevel(int width, int height) : MAZE_WIDTH(width), MAZE_HEIGHT(hei
 	// MainLevel에서 온 경우 재렌더링 필요
 	needsStaticRerender = true;
 
-	GenerateMaze();
+	InitializeMaze();
 }
 
 MazeLevel::~MazeLevel()
@@ -46,7 +46,7 @@ MazeLevel::~MazeLevel()
 }
 
 // 미로 생성 관련 모음 함수
-void MazeLevel::GenerateMaze()
+void MazeLevel::InitializeMaze()
 {
 	// 랜덤 시드 초기화
 	std::srand(static_cast<unsigned int>(std::time(nullptr)));
@@ -64,7 +64,7 @@ void MazeLevel::GenerateMaze()
 	GenerateMazeDFS(EXIT_X, EXIT_Y);
 
 	// 최소 2갈래 이상 경로 보장 (상, 하)
-	EnsureUpDownPaths();
+ 	EnsureUpDownPaths();
 
 	// Actor 생성 (벽, 길)
 	for (int y = 0; y < MAZE_HEIGHT; ++y)
@@ -86,7 +86,7 @@ void MazeLevel::GenerateMaze()
 	InitializeActors();
 
 	// 초기 렌더링 (벽, 길, 출구)
-	InitialRender();
+	InitializeRender();
 }
 
 // DFS를 사용한 랜덤 미로 생성 함수
@@ -215,10 +215,10 @@ void MazeLevel::RegenerateMaze()
 	currentScore = 0;
 
 	// 미로 생성
-	GenerateMaze();
+	InitializeMaze();
 
 	// 초기 렌더링 (벽, 길, 출구)
-	InitialRender();
+	InitializeRender();
 }
 
 void MazeLevel::Tick(float deltaTime)
@@ -235,8 +235,8 @@ void MazeLevel::Tick(float deltaTime)
 	UpdatePathVisualization(deltaTime);
 }
 
-// 초기 렌더링 (벽, 길, 출구): 초기에 생성된 후 변화가 없기 때문 (엄밀히 말하면 길은 변화가 있는데 빈칸이라 상관없을듯)
-void MazeLevel::InitialRender()
+// 초기 렌더링 (벽, 길, 출구): 초기에 생성된 후 변화가 없기 때문
+void MazeLevel::InitializeRender()
 {
 	for (Actor* const actor : actors)
 	{
@@ -252,7 +252,7 @@ void MazeLevel::Render()
 	// 메뉴에서 온 경우 (벽, 길, 출구) 재렌더링
 	if (needsStaticRerender)
 	{
-		InitialRender();
+		InitializeRender();
 		needsStaticRerender = false;
 	}
 

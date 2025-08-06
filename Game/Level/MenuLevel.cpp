@@ -84,6 +84,6 @@ void MenuLevel::Render()
 		Utils::SetConsoleTextColor(static_cast<WORD>(textColor));
 
 		// 메뉴 텍스트 출력
-		std::cout << items[i]->menuText << "\n";
+		std::cout << items[i]->menuText << "\n\n";
 	}
 }

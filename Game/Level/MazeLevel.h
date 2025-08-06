@@ -26,11 +26,11 @@ private:
 	virtual void Tick(float deltaTime) override;
 
 	// 미로(Maze) 관련
-	void GenerateMaze();				// 미로 랜덤 생성 함수
+	void InitializeMaze();				// 미로 랜덤 생성 함수
 	void GenerateMazeDFS(int x, int y);	// DFS 알고리즘으로 미로 생성 함수
 	
 	void InitializeActors();			// 액터 생성 함수
-	void InitialRender();				// 초기 렌더링 (미로, 출구, 플레이어)
+	void InitializeRender();			// 초기 렌더링 (미로, 출구, 플레이어)
 	void RegenerateMaze();				// 미로 재생성 함수
 
 	bool IsValidCell(int x, int y);		// 유효한 셀인지 확인

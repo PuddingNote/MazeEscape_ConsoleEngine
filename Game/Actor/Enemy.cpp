@@ -56,8 +56,8 @@ void Enemy::Tick(float deltaTime)
     // 이동 타이머 업데이트
     moveTimer += deltaTime;
 
-    // 0.1f씩 줄어드니까 사실상 10Stage를 도달하면 0이 되어버림 (대신 최대 Stage 제한)
-    if (moveTimer >= 1.0f - moveSpeed)
+    // 0.1f씩 줄어드니까 사실상 8Stage를 도달하면 0이 되어버림 (대신 최대 5Stage 제한을 둠)
+    if (moveTimer >= 0.8f - moveSpeed)
     {
         moveTimer = 0.0f;
 
