@@ -14,7 +14,7 @@ MenuLevel::MenuLevel()
 		}
 	));
 
-	items.emplace_back(new MenuItem("Go Main Title", []()
+	items.emplace_back(new MenuItem("Go Main Menu", []()
 		{
 			Game::Get().GoMainMenuLevel();
 		}

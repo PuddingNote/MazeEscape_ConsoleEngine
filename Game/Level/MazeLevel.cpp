@@ -212,6 +212,7 @@ void MazeLevel::RegenerateMaze()
 
 	isStageClear = false;
 	isShowingPath = false;
+	currentScore = 0;
 
 	// 미로 생성
 	GenerateMaze();
@@ -255,17 +256,29 @@ void MazeLevel::Render()
 		needsStaticRerender = false;
 	}
 
-	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 1 });
+	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 9), 1 });
 	Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
-	std::cout << "  Stage: " << stageLevel + 1 << '\n';
+	std::cout << "Stage: " << stageLevel + 1;
+
+	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 3 });
+	Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
+	std::cout << "Total Score: " << totalScore;
+
+	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 4 });
+	std::cout << "Stage Score: " << currentScore;
 
 	if (isStageClear)
 	{
-		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 3 });
-		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
-		std::cout << "  Stage Clear!!!  \n";
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 23), 3 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Purple));
+		std::cout << "+" << currentScore;
 
-		Sleep(1000);
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 7), 6 });
+		std::cout << "Stage Clear!!!";
+
+		totalScore += currentScore;
+
+		Sleep(2000);
 		system("cls");
 
 		stageLevel++;
@@ -273,18 +286,23 @@ void MazeLevel::Render()
 		{
 			Utils::SetConsolePosition({ 5, 3 });
 			Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
-			std::cout << "*** ALL STAGES COMPLETED! ***\n";
+			std::cout << "*** ALL STAGES COMPLETED! ***";
 
 			Utils::SetConsolePosition({ 7, 4 });
-			std::cout << "Returning to Main Menu...\n";
+			std::cout << "Returning to Main Menu...";
 
-			Sleep(2000);
+			Utils::SetConsolePosition({ 11, 6 });
+			Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
+			std::cout << "Total Score: " << totalScore;
+
+			Sleep(3000);
 			system("cls");
 
 			Game::Get().GoMainMenuLevel();
 		}
 		else
 		{
+			currentScore = 0;
 			RegenerateMaze();
 		}
 	}
@@ -337,24 +355,41 @@ void MazeLevel::CheckStageClear()
 	// Enemy가 Target에 도달했다면
 	else if (enemy && target && enemy->Position() == target->Position())
 	{
-		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 3 });
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 7), 6 });
 		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Purple));
-		std::cout << "  Game Over!!!  \n";
+		std::cout << "Game Over!!!";
 
-		Sleep(1000);
+		Sleep(2000);
 		system("cls");
 		
 		Utils::SetConsolePosition({ 10, 3 });
-		std::cout << "*** GAME OVER! ***\n";;
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
+		std::cout << "*** GAME OVER! ***";;
 
 		Utils::SetConsolePosition({ 7, 4 });
-		std::cout << "Returning to Main Menu...\n";
+		std::cout << "Returning to Main Menu...";
 
-		Sleep(2000);
+		Utils::SetConsolePosition({ 11, 6 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
+		std::cout << "Total Score: " << totalScore;
+
+		Sleep(3000);
 		system("cls");
 
 		Game::Get().GoMainMenuLevel();
 	}
+}
+
+// Total 점수 추가 함수
+void MazeLevel::AddTotalScore()
+{
+	totalScore += currentScore;
+}
+
+// Stage 점수 추가 함수
+void MazeLevel::AddCurrentScore()
+{
+	currentScore++;
 }
 
 // Stage Clear시 Enemy의 Target까지의 남은 경로 Path Actor로 표현하는 함수
@@ -393,6 +428,7 @@ void MazeLevel::UpdatePathVisualization(float deltaTime)
 			if (Enemy* enemy = actor->As<Enemy>())
 			{
 				bool hasMorePaths = enemy->RemoveNextPath();
+				AddCurrentScore();
 				if (!hasMorePaths)
 				{
 					// 모든 Path가 제거되면 Stage Clear

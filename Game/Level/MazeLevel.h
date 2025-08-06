@@ -25,6 +25,7 @@ public:
 private:
 	virtual void Tick(float deltaTime) override;
 
+	// 미로(Maze) 관련
 	void GenerateMaze();				// 미로 랜덤 생성 함수
 	void GenerateMazeDFS(int x, int y);	// DFS 알고리즘으로 미로 생성 함수
 	
@@ -40,7 +41,10 @@ private:
 	void StartPathVisualization();					// 경로 시각화 시작
 	void UpdatePathVisualization(float deltaTime);	// 경로 업데이트
 
-	void CheckStageClear();				// 스테이지 클리어 확인 함수
+	// 게임(Stage) 관련
+	void CheckStageClear();			// 스테이지 클리어 확인 함수
+	void AddTotalScore();			// 스테이지 종료시 총점에 추가
+	void AddCurrentScore();			// 스테이지 점수 +1
 
 private:
 	// Maze Data
@@ -50,15 +54,18 @@ private:
 	int EXIT_Y;
 	MazeCellType** mazeData;
 
-	// Stage Clear 관련 변수들
+	// Stage Data
+	const int MAX_STAGE = 5;	// 최대 스테이지 레벨 (안넣어도 되지만 Stage별 Enemy 이동속도의 최대치를 넣지 않았기때문에 넣었음)
+	int stageLevel = 0;			// 스테이지 레벨
+	bool isStageClear = false;	// 스테이지 클리어 여부 확인 변수
+	int totalScore = 0;			// 총 점수
+	int currentScore = 0;		// 현재 스테이지에서 얻은 점수
+
+	// Stage Clear Path Data
 	bool isShowingPath = false;					// 경로 표시 중인지 확인
 	float pathShowTimer = 0.0f;					// Path 표시 타이머
-	const float PATH_SHOW_INTERVAL = 0.2f;		// 표시된 Path가 사라지는 간격
+	const float PATH_SHOW_INTERVAL = 0.1f;		// 표시된 Path가 사라지는 간격
 	const float ENEMY_SPEED_INCREMENT = 0.1f;   // 스테이지당 Enemy 속도 증가량
 
 	bool needsStaticRerender = false;  // 재렌더링 필요 여부 확인 (벽, 길, 출구)
-
-	const int MAX_STAGE = 2;	// 최대 스테이지 레벨
-	int stageLevel = 0;			// 스테이지 레벨
-	bool isStageClear = false;	// 스테이지 클리어 여부 확인 변수
 };
