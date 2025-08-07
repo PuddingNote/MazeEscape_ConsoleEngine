@@ -43,7 +43,8 @@ void Enemy::BeginPlay()
     // Target을 찾았으면 해당 Position으로 경로 탐색
     if (targetPosition.x != 0 || targetPosition.y != 0)
     {
-        //// BFS 경로 탐색
+        // Todo: BFS와 A* 비교 필요시 활성화
+        // BFS 경로 탐색
         //ResetSearchCount();
         //FindPathToTargetBFS(targetPosition);
         //bfsCount = GetLastSearchCount();
@@ -67,7 +68,7 @@ void Enemy::Tick(float deltaTime)
     // 이동 타이머 업데이트
     moveTimer += deltaTime;
 
-    // 0.1f씩 줄어드니까 사실상 8Stage를 도달하면 0이 되어버림 (대신 최대 5Stage 제한을 둠)
+    // 0.1f씩 줄어드니까 사실상 8Stage를 도달하면 0이 되어버림 (대신 최대 5 Stage 제한을 둠)
     if (moveTimer >= 0.8f - moveSpeed)
     {
         moveTimer = 0.0f;
@@ -113,7 +114,6 @@ void Enemy::FindPathToTargetBFS(const Vector2& targetPosition)
         NodeBFS current = queue.front();
         queue.pop();
 
-        // 
         searchCount++;
 
         // 목표 위치에 도달했는지 확인
@@ -134,7 +134,6 @@ void Enemy::FindPathToTargetBFS(const Vector2& targetPosition)
             // 경로를 시작점부터 타겟까지 순서로 정렬
             std::reverse(path.begin(), path.end());
 
-            // 
             lastSearchCount = searchCount;
 
             SetPath(path);
@@ -207,7 +206,6 @@ void Enemy::FindPathToTarget(const Vector2& targetPosition)
 
         closedSet[currentHash] = true;
 
-        // 
         searchCount++;
 
         // 타겟에 도달했으면 경로 재구성
@@ -228,7 +226,6 @@ void Enemy::FindPathToTarget(const Vector2& targetPosition)
             // 경로를 시작점에서 타겟까지 순서로 뒤집기
             std::reverse(path.begin(), path.end());
 
-            // 
             lastSearchCount = searchCount;
 
             SetPath(path);
@@ -275,7 +272,7 @@ void Enemy::FindPathToTarget(const Vector2& targetPosition)
 
 int Enemy::Heuristic(const Vector2& from, const Vector2& to) const
 {
-    // 맨해튼 거리 (Manhattan Distance)
+    // 맨하탄 거리 (Manhattan Distance)
     return abs(from.x - to.x) + abs(from.y - to.y);
 }
 

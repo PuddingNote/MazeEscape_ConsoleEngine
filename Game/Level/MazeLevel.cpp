@@ -15,10 +15,12 @@
 #include <iostream>
 #include <random>
 #include <ctime>
+#include <fstream>
+#include <string>
 
 MazeLevel::MazeLevel(int width, int height) : MAZE_WIDTH(width), MAZE_HEIGHT(height)
 {
-	// EXIT 위치 계산
+	// 출구(EXIT) 위치 계산
 	EXIT_X = MAZE_WIDTH - 2;
 	EXIT_Y = MAZE_HEIGHT / 2;
 
@@ -66,7 +68,7 @@ void MazeLevel::InitializeMaze()
 	GenerateMazeDFS(EXIT_X, EXIT_Y);
 
 	// 최소 2갈래 이상 경로 보장 (상, 하)
- 	EnsureUpDownPaths();
+	EnsureUpDownPaths();
 
 	// Actor 생성 (벽, 길)
 	for (int y = 0; y < MAZE_HEIGHT; ++y)
@@ -193,18 +195,18 @@ bool MazeLevel::IsValidCell(int x, int y)
 void MazeLevel::EnsureUpDownPaths()
 {
 	// 출구에서 상하 2방향 경로 확인
-	bool hasLeftPath = HasValidPath(EXIT_X, EXIT_Y, EXIT_X, EXIT_Y - 2);
-	bool hasRightPath = HasValidPath(EXIT_X, EXIT_Y, EXIT_X, EXIT_Y + 2);
+	bool hasUpPath = HasValidPath(EXIT_X, EXIT_Y, EXIT_X, EXIT_Y - 2);
+	bool hasDownPath = HasValidPath(EXIT_X, EXIT_Y, EXIT_X, EXIT_Y + 2);
 
 	// 상단 경로가 없으면 생성
-	if (!hasLeftPath)
+	if (!hasUpPath)
 	{
 		mazeData[EXIT_Y - 1][EXIT_X] = MazeCellType::Ground;
 		mazeData[EXIT_Y - 2][EXIT_X] = MazeCellType::Ground;
 	}
 
 	// 하단 경로가 없으면 생성
-	if (!hasRightPath)
+	if (!hasDownPath)
 	{
 		mazeData[EXIT_Y + 1][EXIT_X] = MazeCellType::Ground;
 		mazeData[EXIT_Y + 2][EXIT_X] = MazeCellType::Ground;
@@ -215,17 +217,7 @@ void MazeLevel::EnsureUpDownPaths()
 bool MazeLevel::HasValidPath(int startX, int startY, int targetX, int targetY)
 {
 	// 중간 지점이 길인지 확인
-	if (targetX == startX - 2 && targetY == startY)			// 좌측
-	{
-		return mazeData[startY][startX - 1] == MazeCellType::Ground &&
-			mazeData[startY][startX - 2] == MazeCellType::Ground;
-	}
-	else if (targetX == startX + 2 && targetY == startY)	// 우측
-	{
-		return mazeData[startY][startX + 1] == MazeCellType::Ground && 
-			   mazeData[startY][startX + 2] == MazeCellType::Ground;
-	}
-	else if (targetX == startX && targetY == startY + 1)	// 하단
+	if (targetX == startX && targetY == startY + 1)			// 하단
 	{
 		return mazeData[startY + 1][startX] == MazeCellType::Ground &&
 			mazeData[startY + 2][startX] == MazeCellType::Ground;
@@ -245,7 +237,7 @@ void MazeLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	// Todo: R키를 누르면 미로 재생성 (테스트 편의성을 위해 넣은거라 알아만 두고 없애진 않음)
+	// Todo: R키를 누르면 미로 재생성 (테스트 편의성을 위해 넣은거라 알아만 두고 따로 없애진 않음)
 	if (Input::Get().GetKeyDown('R'))
 	{
 		RegenerateMaze();
@@ -268,13 +260,16 @@ void MazeLevel::Render()
 	Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
 	std::cout << "Stage: " << stageLevel + 1;
 
-	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 3 });
+	ShowBestScore(static_cast<short>(MAZE_WIDTH + 6), 3);
+
+	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 4 });
 	Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
 	std::cout << "Total Score: " << totalScore;
 
-	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 4 });
+	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 5 });
 	std::cout << "Stage Score: " << currentScore;
 
+	// Todo: BFS와 A* 비교 필요시 활성화
 	// === Enemy 찾아서 Count Result 표시 ===
 	/*Enemy* enemy = nullptr;
 	for (Actor* const actor : actors)
@@ -298,14 +293,14 @@ void MazeLevel::Render()
 		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 35), 4 });
 		std::cout << "A* Count: " << enemy->GetAStarCount();
 	}*/
-	
+
 	if (isStageClear)
 	{
-		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 23), 3 });
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 23), 4 });
 		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Purple));
 		std::cout << "+" << currentScore;
 
-		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 7), 6 });
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 7), 7 });
 		std::cout << "Stage Clear!!!";
 
 		totalScore += currentScore;
@@ -323,9 +318,9 @@ void MazeLevel::Render()
 			Utils::SetConsolePosition({ 7, 4 });
 			std::cout << "Returning to Main Menu...";
 
-			Utils::SetConsolePosition({ 11, 6 });
-			Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
-			std::cout << "Total Score: " << totalScore;
+			// 최고점수 저장 및 표시
+			SaveBestScore();
+			ShowFinalScore();
 
 			Sleep(3000);
 			system("cls");
@@ -467,13 +462,13 @@ void MazeLevel::CheckStageClear()
 	// Enemy가 Target에 도달했다면
 	else if (enemy && target && enemy->Position() == target->Position())
 	{
-		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 7), 6 });
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 7), 7 });
 		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Purple));
 		std::cout << "Game Over!!!";
 
 		Sleep(2000);
 		system("cls");
-		
+
 		Utils::SetConsolePosition({ 10, 3 });
 		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
 		std::cout << "*** GAME OVER! ***";;
@@ -481,9 +476,9 @@ void MazeLevel::CheckStageClear()
 		Utils::SetConsolePosition({ 7, 4 });
 		std::cout << "Returning to Main Menu...";
 
-		Utils::SetConsolePosition({ 11, 6 });
-		Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
-		std::cout << "Total Score: " << totalScore;
+		// 최고점수 저장 및 표시
+		SaveBestScore();
+		ShowFinalScore();
 
 		Sleep(3000);
 		system("cls");
@@ -502,4 +497,101 @@ void MazeLevel::AddTotalScore()
 void MazeLevel::AddCurrentScore()
 {
 	currentScore++;
+}
+
+
+
+// 모드에 따른 번호 반환 함수
+int MazeLevel::GetModeLineNumber() const
+{
+	if (MAZE_WIDTH == 21 && MAZE_HEIGHT == 11)
+	{
+		return 0;
+	}
+	else if (MAZE_WIDTH == 33 && MAZE_HEIGHT == 15)
+	{
+		return 1;
+	}
+	else
+	{
+		return 2;
+	}
+}
+
+// 최고점수 저장 함수
+void MazeLevel::SaveBestScore()
+{
+	std::string fileName = "../Settings/BestScore.txt";
+	int scores[3] = { 0, 0, 0 };
+
+	// 기존 점수들 읽기
+	std::ifstream file(fileName);
+	if (file.is_open())
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			file >> scores[i];
+		}
+		file.close();
+	}
+
+	// 현재 모드의 점수 업데이트 (더 높은 점수일 때만)
+	int modeIndex = GetModeLineNumber();
+	if (totalScore > scores[modeIndex])
+	{
+		scores[modeIndex] = totalScore;
+
+		// 파일에 모든 점수 저장
+		std::ofstream file(fileName);
+		if (file.is_open())
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				file << scores[i] << std::endl;
+			}
+			file.close();
+		}
+
+		Utils::SetConsolePosition({ 30, 6 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Red));
+		std::cout << "New Record!!";
+	}
+}
+
+// 최고점수 로드 함수
+int MazeLevel::LoadBestScore() const
+{
+	std::string fileName = "../Settings/BestScore.txt";
+	int scores[3] = { 0, 0, 0 };
+
+	std::ifstream file(fileName);
+	if (file.is_open())
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			file >> scores[i];
+		}
+		file.close();
+	}
+
+	int modeIndex = GetModeLineNumber();
+	return scores[modeIndex];
+}
+
+// Best Score 표시 함수
+void MazeLevel::ShowBestScore(short x, short y)
+{
+	Utils::SetConsolePosition({ x, y });
+	Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
+	std::cout << "Best  Score: " << LoadBestScore();
+}
+
+// 최종 점수와 Best Score 표시 함수
+void MazeLevel::ShowFinalScore()
+{
+	ShowBestScore(11, 6);
+
+	Utils::SetConsolePosition({ 11, 7 });
+	Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
+	std::cout << "Total Score: " << totalScore;
 }

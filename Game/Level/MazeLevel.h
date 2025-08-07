@@ -28,7 +28,7 @@ private:
 	// 미로(Maze) 관련
 	void InitializeMaze();				// 미로 랜덤 생성 함수
 	void GenerateMazeDFS(int x, int y);	// DFS 알고리즘으로 미로 생성 함수
-	
+
 	void InitializeActors();			// 액터 생성 함수
 	void InitializeRender();			// 초기 렌더링 (미로, 출구, 플레이어)
 	void RegenerateMaze();				// 미로 재생성 함수
@@ -42,9 +42,16 @@ private:
 	void UpdatePathVisualization(float deltaTime);	// 경로 업데이트
 
 	// 게임(Stage) 관련
-	void CheckStageClear();				// 스테이지 클리어 확인 함수
-	void AddTotalScore();				// 스테이지 종료시 총점에 추가
-	void AddCurrentScore();				// 스테이지 점수 +1
+	void CheckStageClear();					// 스테이지 클리어 확인 함수
+	void AddTotalScore();					// 스테이지 종료시 총점에 추가
+	void AddCurrentScore();					// 스테이지 점수 +1
+
+	// 점수 관리 기능
+	int GetModeLineNumber() const;			// 모드에 따른 번호 반환
+	void SaveBestScore();					// 최고점수 저장 (게임 종료 시 호출)
+	int LoadBestScore() const;				// 최고점수 로드
+	void ShowBestScore(short x, short y);	// Best Score 표시
+	void ShowFinalScore();					// 최종 점수와 Best Score 표시
 
 private:
 	// Maze Data
