@@ -39,7 +39,7 @@ void Player::Tick(float deltaTime)
 		// 토글 전환 전에 MazeLevel에 재렌더링 필요함을 알림
 		if (MazeLevel* mazeLevel = dynamic_cast<MazeLevel*>(GetOwner()))
 		{
-			mazeLevel->SetNeedsStaticRerender(true);
+			mazeLevel->SetNeedsRerender(true);
 		}
 		Game::Get().ToggleMenu();
 		return;

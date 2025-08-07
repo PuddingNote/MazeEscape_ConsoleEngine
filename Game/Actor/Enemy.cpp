@@ -11,6 +11,7 @@
 
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include <iostream>
 
@@ -18,6 +19,8 @@ Enemy::Enemy(const Vector2& position) : Actor('E', Color::SkyBlue, position)
 {
     SetSortingOrder(2);
 }
+
+
 
 void Enemy::BeginPlay()
 {
@@ -40,7 +43,15 @@ void Enemy::BeginPlay()
     // Target을 찾았으면 해당 Position으로 경로 탐색
     if (targetPosition.x != 0 || targetPosition.y != 0)
     {
+        //// BFS 경로 탐색
+        //ResetSearchCount();
+        //FindPathToTargetBFS(targetPosition);
+        //bfsCount = GetLastSearchCount();
+
+        // A* 경로 탐색
+        ResetSearchCount();
         FindPathToTarget(targetPosition);
+        astarCount = GetLastSearchCount();
     }
 }
 
@@ -71,6 +82,8 @@ void Enemy::Tick(float deltaTime)
     }
 }
 
+
+
 // 미로 사이즈 가져와서 설정하는 함수
 void Enemy::SetMazeSize(int width, int height)
 {
@@ -78,19 +91,103 @@ void Enemy::SetMazeSize(int width, int height)
     mazeHeight = height;
 }
 
-// 최단 경로 탐색 함수 (A* 알고리즘)
-void Enemy::FindPathToTarget(const Vector2& targetPosition)
+
+// 최단 경로 탐색 함수 (BFS 알고리즘)
+void Enemy::FindPathToTargetBFS(const Vector2& targetPosition)
 {
-    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> openSet;
-    std::unordered_map<int, bool> closedSet;    // 방문 완료된 노드
-    std::unordered_map<int, Vector2> cameFrom;  // 경로 추적
-    std::unordered_map<int, int> gScore;        // 시작점부터의 거리
-    std::unordered_map<int, int> fScore;        // 휴리스틱 + gScore
+    std::queue<NodeBFS> queue;                  // BFS 큐
+    std::unordered_set<int> visited;            // 방문한 위치 저장
+    std::unordered_map<int, Vector2> parent;    // 부모 노드 정보 저장
 
     Vector2 start = Position();
     int startHash = start.x + start.y * 1000;
 
-    // 초기화
+    int searchCount = 0;
+
+    // 시작 위치를 큐에 추가 (부모는 (-1, -1)로 설정)
+    queue.push(NodeBFS(start, Vector2(-1, -1)));
+    visited.insert(startHash);
+
+    while (!queue.empty())
+    {
+        NodeBFS current = queue.front();
+        queue.pop();
+
+        // 
+        searchCount++;
+
+        // 목표 위치에 도달했는지 확인
+        if (current.pos == targetPosition)
+        {
+            // 경로 재구성
+            std::vector<Vector2> path;
+            Vector2 currentPos = targetPosition;
+
+            while (currentPos.x != start.x || currentPos.y != start.y)
+            {
+                path.push_back(currentPos);
+                int hash = currentPos.x + currentPos.y * 1000;
+                currentPos = parent[hash];
+            }
+            path.push_back(start);
+
+            // 경로를 시작점부터 타겟까지 순서로 정렬
+            std::reverse(path.begin(), path.end());
+
+            // 
+            lastSearchCount = searchCount;
+
+            SetPath(path);
+            return;
+        }
+
+        // 4방향 탐색 (상, 하, 좌, 우)
+        Vector2 directions[4] = { {0, -1}, {0, 1}, {-1, 0}, {1, 0} };
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Vector2 next = current.pos + directions[i];
+            int nextHash = next.x + next.y * 1000;
+
+            // 이동 가능한 위치인지 확인
+            if (!CanMoveTo(next))
+            {
+                continue;
+            }
+
+            // 이미 방문한 노드인지 확인
+            if (visited.find(nextHash) != visited.end())
+            {
+                continue;
+            }
+
+            // 새 노드를 큐에 추가
+            queue.push(NodeBFS(next, current.pos));
+            visited.insert(nextHash);
+            parent[nextHash] = current.pos;
+        }
+    }
+
+    // 경로를 찾지 못한 경우
+    lastSearchCount = searchCount;
+    hasPath = false;
+}
+
+// 최단 경로 탐색 함수 (A* 알고리즘)
+void Enemy::FindPathToTarget(const Vector2& targetPosition)
+{
+    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> openSet;
+    std::unordered_map<int, bool> closedSet;    // 방문 완료된 노드 (이미 방문한 코드)
+    std::unordered_map<int, Vector2> cameFrom;  // 경로 추적 (부모 노드 추적)
+    std::unordered_map<int, int> gScore;        // 시작점부터의 거리
+    std::unordered_map<int, int> fScore;        // 휴리스틱 + gScore (f = g + h)
+
+    Vector2 start = Position();
+    int startHash = start.x + start.y * 1000;
+
+    int searchCount = 0;
+
+    // 시작 노드 초기화
     openSet.push(Node(start, 0, Heuristic(start, targetPosition)));
     gScore[startHash] = 0;
     fScore[startHash] = Heuristic(start, targetPosition);
@@ -110,6 +207,9 @@ void Enemy::FindPathToTarget(const Vector2& targetPosition)
 
         closedSet[currentHash] = true;
 
+        // 
+        searchCount++;
+
         // 타겟에 도달했으면 경로 재구성
         if (current.pos == targetPosition)
         {
@@ -127,6 +227,9 @@ void Enemy::FindPathToTarget(const Vector2& targetPosition)
 
             // 경로를 시작점에서 타겟까지 순서로 뒤집기
             std::reverse(path.begin(), path.end());
+
+            // 
+            lastSearchCount = searchCount;
 
             SetPath(path);
             return;
@@ -166,6 +269,7 @@ void Enemy::FindPathToTarget(const Vector2& targetPosition)
     }
 
     // 경로를 찾지 못한 경우
+    lastSearchCount = searchCount;
     hasPath = false;
 }
 
@@ -175,6 +279,7 @@ int Enemy::Heuristic(const Vector2& from, const Vector2& to) const
     return abs(from.x - to.x) + abs(from.y - to.y);
 }
 
+// 이동 가능 여부 확인 함수
 bool Enemy::CanMoveTo(const Vector2& position)
 {
     if (!GetOwner())
@@ -217,6 +322,8 @@ void Enemy::SetPath(const std::vector<Vector2>& path)
     hasPath = true;
 }
 
+
+
 // Path 액터 생성 함수
 void Enemy::CreatePathActors()
 {
@@ -237,7 +344,7 @@ void Enemy::CreatePathActors()
     }
 }
 
-// Path 액터 제거 함수
+// Path 액터 전체 삭제 함수
 void Enemy::ClearPathActors()
 {
     // Path 액터들 제거
@@ -251,6 +358,7 @@ void Enemy::ClearPathActors()
     pathActors.clear();
 }
 
+// Path 액터 일부 삭제 함수
 bool Enemy::RemoveNextPath()
 {
     if (pathActors.empty())
@@ -267,7 +375,7 @@ bool Enemy::RemoveNextPath()
         Utils::SetConsolePosition({ (short)pos.x, (short)pos.y });
         std::cout << ' ';
 
-        // Level에서 해당 Actor 제거
+        // Level에서 해당 액터 제거
         GetOwner()->RemoveActor(pathActor);
     }
 
@@ -277,6 +385,8 @@ bool Enemy::RemoveNextPath()
     // 남은 Path가 있는지 확인
     return !pathActors.empty();
 }
+
+
 
 // Enemy 움직임 중지 함수
 void Enemy::StopMovement()

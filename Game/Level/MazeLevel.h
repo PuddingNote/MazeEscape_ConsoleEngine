@@ -20,7 +20,7 @@ public:
 
 	virtual void Render() override;
 	virtual bool CanPlayerMove(const Vector2& playerPosition, const Vector2& targetPosition) override;	// 플레이어가 이동 가능한지 여부
-	void SetNeedsStaticRerender(bool needs) { needsStaticRerender = needs; }
+	void SetNeedsRerender(bool needs) { needsRerender = needs; }
 
 private:
 	virtual void Tick(float deltaTime) override;
@@ -42,9 +42,9 @@ private:
 	void UpdatePathVisualization(float deltaTime);	// 경로 업데이트
 
 	// 게임(Stage) 관련
-	void CheckStageClear();			// 스테이지 클리어 확인 함수
-	void AddTotalScore();			// 스테이지 종료시 총점에 추가
-	void AddCurrentScore();			// 스테이지 점수 +1
+	void CheckStageClear();				// 스테이지 클리어 확인 함수
+	void AddTotalScore();				// 스테이지 종료시 총점에 추가
+	void AddCurrentScore();				// 스테이지 점수 +1
 
 private:
 	// Maze Data
@@ -67,5 +67,5 @@ private:
 	const float PATH_SHOW_INTERVAL = 0.1f;		// 표시된 Path가 사라지는 간격
 	const float ENEMY_SPEED_INCREMENT = 0.1f;   // 스테이지당 Enemy 속도 증가량
 
-	bool needsStaticRerender = false;  // 재렌더링 필요 여부 확인 (벽, 길, 출구)
+	bool needsRerender = false;  // 재렌더링 필요 여부 확인 (벽, 길, 출구)
 };

@@ -15,6 +15,8 @@ Actor::~Actor()
 
 }
 
+
+
 void Actor::BeginPlay()
 {
 	hasBeganPlay = true;
@@ -43,6 +45,8 @@ void Actor::Render()
 	std::cout << image;
 }
 
+
+
 void Actor::SetPosition(const Vector2& newPosition)
 {
 	// 커서 위치 값 생성
@@ -70,6 +74,8 @@ void Actor::SetSortingOrder(unsigned int sortingOrder)
 	this->sortingOrder = sortingOrder;
 }
 
+
+
 void Actor::SetOwner(Level* newOwner)
 {
 	owner = newOwner;
@@ -79,6 +85,8 @@ Level* Actor::GetOwner()
 {
 	return owner;
 }
+
+
 
 void Actor::QuitGame()
 {

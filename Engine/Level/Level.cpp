@@ -18,12 +18,10 @@ Level::~Level()
 	actors.clear();
 }
 
+
+
 void Level::AddActor(Actor* newActor)
 {
-	// 예외처리(중복 여부 확인) 필요함
-
-
-	// push_back/emplace_back : 배열 맨 뒤에 새로운 항목 추가하는 함수
 	actors.emplace_back(newActor);
 
 	// Ownership 설정
@@ -39,6 +37,8 @@ void Level::RemoveActor(Actor* actor)
         actors.erase(it);
     }
 }
+
+
 
 void Level::BeginPlay()
 {
@@ -100,6 +100,8 @@ void Level::Render()
 		actor->Render();
 	}
 }
+
+
 
 void Level::SortActorsBySortingOrder()
 {

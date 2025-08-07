@@ -36,9 +36,6 @@
     <ClCompile Include="Actor\Path.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Enemy.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Level\MazeLevel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -46,6 +43,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Level\MainMenuLevel.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Enemy.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

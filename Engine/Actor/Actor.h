@@ -10,6 +10,9 @@ enum class Color : int
 	Green = 2,
 	Red = 4,
 	White = Red | Green | Blue,
+	Yellow = Red | Green,
+	Purple = Red | Blue,
+	SkyBlue = Green | Blue,
 	Intensity = 8
 };
 

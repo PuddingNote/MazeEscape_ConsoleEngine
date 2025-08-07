@@ -22,6 +22,8 @@ Game::~Game()
 	CleanUp();
 }
 
+
+
 void Game::ToggleMenu()
 {
 	// 화면 정리
@@ -55,6 +57,8 @@ void Game::StartGame(int width, int height)
 	system("cls");
 	SafeSwitchLevel(new MazeLevel(width, height));
 }
+
+
 
 void Game::SafeSwitchLevel(Level* newLevel)
 {

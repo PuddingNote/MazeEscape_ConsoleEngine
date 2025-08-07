@@ -30,7 +30,7 @@ MazeLevel::MazeLevel(int width, int height) : MAZE_WIDTH(width), MAZE_HEIGHT(hei
 	}
 
 	// MainLevel에서 온 경우 재렌더링 필요
-	needsStaticRerender = true;
+	needsRerender = true;
 
 	InitializeMaze();
 }
@@ -44,6 +44,8 @@ MazeLevel::~MazeLevel()
 
 	SafeDeleteArray(mazeData);
 }
+
+
 
 // 미로 생성 관련 모음 함수
 void MazeLevel::InitializeMaze()
@@ -126,11 +128,7 @@ void MazeLevel::GenerateMazeDFS(int x, int y)
 	}
 }
 
-// 유효한 셀인지 확인하는 함수 (미로 생성시 파악을 위해: 미로 범위 내에 있고, 가장자리가 아닌 경우)
-bool MazeLevel::IsValidCell(int x, int y)
-{
-	return x > 0 && x < MAZE_WIDTH - 1 && y > 0 && y < MAZE_HEIGHT - 1;
-}
+
 
 // 초기 액터 생성 함수 (출구, 적, 플레이어)
 void MazeLevel::InitializeActors()
@@ -148,6 +146,47 @@ void MazeLevel::InitializeActors()
 
 	// 플레이어 생성 (현재: 좌측 상단 / 나중에: 출구에서 일정거리 이상의 랜덤으로 설정 할 예정)
 	AddActor(new Player(Vector2(1, 1)));
+}
+
+// 초기 렌더링 (벽, 길, 출구): 초기에 생성된 후 변화가 없기 때문
+void MazeLevel::InitializeRender()
+{
+	for (Actor* const actor : actors)
+	{
+		if (actor->As<Wall>() || actor->As<Ground>() || actor->As<Target>())
+		{
+			actor->Render();
+		}
+	}
+}
+
+// 미로 재생성 함수
+void MazeLevel::RegenerateMaze()
+{
+	// 기존 Actor들 모두 삭제
+	for (Actor* actor : actors)
+	{
+		SafeDelete(actor);
+	}
+	actors.clear();
+
+	isStageClear = false;
+	isShowingPath = false;
+	currentScore = 0;
+
+	// 미로 생성
+	InitializeMaze();
+
+	// 초기 렌더링 (벽, 길, 출구)
+	InitializeRender();
+}
+
+
+
+// 유효한 셀인지 확인하는 함수 (미로 생성시 파악을 위해: 미로 범위 내에 있고, 가장자리가 아닌 경우)
+bool MazeLevel::IsValidCell(int x, int y)
+{
+	return x > 0 && x < MAZE_WIDTH - 1 && y > 0 && y < MAZE_HEIGHT - 1;
 }
 
 // 최소 2갈래 이상의 경로 보장 함수 (상, 하)
@@ -200,32 +239,13 @@ bool MazeLevel::HasValidPath(int startX, int startY, int targetX, int targetY)
 	return false;
 }
 
-// 미로 재생성 함수
-void MazeLevel::RegenerateMaze()
-{
-	// 기존 Actor들 모두 삭제
-	for (Actor* actor : actors)
-	{
-		SafeDelete(actor);
-	}
-	actors.clear();
 
-	isStageClear = false;
-	isShowingPath = false;
-	currentScore = 0;
-
-	// 미로 생성
-	InitializeMaze();
-
-	// 초기 렌더링 (벽, 길, 출구)
-	InitializeRender();
-}
 
 void MazeLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	// Todo: (나중에 삭제) R키를 누르면 미로 재생성
+	// Todo: R키를 누르면 미로 재생성 (테스트 편의성을 위해 넣은거라 알아만 두고 없애진 않음)
 	if (Input::Get().GetKeyDown('R'))
 	{
 		RegenerateMaze();
@@ -235,25 +255,13 @@ void MazeLevel::Tick(float deltaTime)
 	UpdatePathVisualization(deltaTime);
 }
 
-// 초기 렌더링 (벽, 길, 출구): 초기에 생성된 후 변화가 없기 때문
-void MazeLevel::InitializeRender()
-{
-	for (Actor* const actor : actors)
-	{
-		if (actor->As<Wall>() || actor->As<Ground>() || actor->As<Target>())
-		{
-			actor->Render();
-		}
-	}
-}
-
 void MazeLevel::Render()
 {
 	// 메뉴에서 온 경우 (벽, 길, 출구) 재렌더링
-	if (needsStaticRerender)
+	if (needsRerender)
 	{
 		InitializeRender();
-		needsStaticRerender = false;
+		needsRerender = false;
 	}
 
 	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 9), 1 });
@@ -267,6 +275,30 @@ void MazeLevel::Render()
 	Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 6), 4 });
 	std::cout << "Stage Score: " << currentScore;
 
+	// === Enemy 찾아서 Count Result 표시 ===
+	/*Enemy* enemy = nullptr;
+	for (Actor* const actor : actors)
+	{
+		if (actor->As<Enemy>())
+		{
+			enemy = actor->As<Enemy>();
+			break;
+		}
+	}
+	if (enemy)
+	{
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 28), 1 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::SkyBlue));
+		std::cout << "[Enemy Path Count Result]";
+
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 34), 3 });
+		Utils::SetConsoleTextColor(static_cast<WORD>(Color::Yellow));
+		std::cout << "BFS Count: " << enemy->GetBFSCount();
+
+		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 35), 4 });
+		std::cout << "A* Count: " << enemy->GetAStarCount();
+	}*/
+	
 	if (isStageClear)
 	{
 		Utils::SetConsolePosition({ static_cast<short>(MAZE_WIDTH + 23), 3 });
@@ -319,7 +351,87 @@ void MazeLevel::Render()
 	}
 }
 
-// 출구에 플레이어나 적이 도달 했는지 확인
+
+
+// Stage Clear시 Enemy의 Target까지의 남은 경로 Path Actor로 표현하는 함수
+void MazeLevel::StartPathVisualization()
+{
+	isShowingPath = true;
+
+	// Enemy에게 Path Actor들 생성 요청
+	for (Actor* const actor : actors)
+	{
+		if (Enemy* enemy = actor->As<Enemy>())
+		{
+			enemy->CreatePathActors();
+			break;
+		}
+	}
+}
+
+// Path Animation 진행 함수
+void MazeLevel::UpdatePathVisualization(float deltaTime)
+{
+	if (!isShowingPath)
+	{
+		return;
+	}
+
+	pathShowTimer += deltaTime;
+
+	if (pathShowTimer >= PATH_SHOW_INTERVAL)
+	{
+		pathShowTimer = 0.0f;
+
+		// Enemy에게 다음 Path 제거 요청
+		for (Actor* const actor : actors)
+		{
+			if (Enemy* enemy = actor->As<Enemy>())
+			{
+				bool hasMorePaths = enemy->RemoveNextPath();
+				AddCurrentScore();
+				if (!hasMorePaths)
+				{
+					// 모든 Path가 제거되면 Stage Clear
+					isShowingPath = false;
+					isStageClear = true;
+				}
+				break;
+			}
+		}
+	}
+}
+
+
+
+// 플레이어 움직임 가능 여부 확인 함수
+bool MazeLevel::CanPlayerMove(const Vector2& playerPosition, const Vector2& targetPosition)
+{
+	if (isShowingPath || isStageClear)
+	{
+		return false;
+	}
+
+	// 이동하려는 위치에 Wall이 있는지 확인
+	for (Actor* const actor : actors)
+	{
+		if (actor->Position() == targetPosition)
+		{
+			// Wall이면 이동 불가
+			if (actor->As<Wall>())
+			{
+				return false;
+			}
+
+			// Ground or Target or Enemy
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// 출구에 플레이어나 적이 도달 했는지 확인하는 함수
 void MazeLevel::CheckStageClear()
 {
 	Target* target = nullptr;
@@ -390,80 +502,4 @@ void MazeLevel::AddTotalScore()
 void MazeLevel::AddCurrentScore()
 {
 	currentScore++;
-}
-
-// Stage Clear시 Enemy의 Target까지의 남은 경로 Path Actor로 표현하는 함수
-void MazeLevel::StartPathVisualization()
-{
-	isShowingPath = true;
-
-	// Enemy에게 Path Actor들 생성 요청
-	for (Actor* const actor : actors)
-	{
-		if (Enemy* enemy = actor->As<Enemy>())
-		{
-			enemy->CreatePathActors();
-			break;
-		}
-	}
-}
-
-// Path Animation 진행 함수
-void MazeLevel::UpdatePathVisualization(float deltaTime)
-{
-	if (!isShowingPath) 
-	{
-		return;
-	}
-
-	pathShowTimer += deltaTime;
-
-	if (pathShowTimer >= PATH_SHOW_INTERVAL)
-	{
-		pathShowTimer = 0.0f;
-
-		// Enemy에게 다음 Path 제거 요청
-		for (Actor* const actor : actors)
-		{
-			if (Enemy* enemy = actor->As<Enemy>())
-			{
-				bool hasMorePaths = enemy->RemoveNextPath();
-				AddCurrentScore();
-				if (!hasMorePaths)
-				{
-					// 모든 Path가 제거되면 Stage Clear
-					isShowingPath = false;
-					isStageClear = true;
-				}
-				break;
-			}
-		}
-	}
-}
-
-// 플레이어 움직임 가능 여부 확인
-bool MazeLevel::CanPlayerMove(const Vector2& playerPosition, const Vector2& targetPosition)
-{
-	if (isShowingPath || isStageClear)
-	{
-		return false;
-	}
-
-	// 이동하려는 위치에 Wall이 있는지 확인
-	for (Actor* const actor : actors)
-	{
-		if (actor->Position() == targetPosition)
-		{
-			// Wall이면 이동 불가
-			if (actor->As<Wall>())
-			{
-				return false;
-			}
-
-			// Ground or Target or Enemy
-			return true;
-		}
-	}
-
-	return false;
 }
